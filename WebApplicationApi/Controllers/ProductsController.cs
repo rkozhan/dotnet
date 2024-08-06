@@ -26,6 +26,19 @@ namespace WebApplicationApi.Controllers
             return Ok(await _context.Products.ToArrayAsync());
         }
 
+        // Asynchronous method to get all available products
+        [HttpGet("available")]
+        public async Task<ActionResult<IEnumerable<Product>>> getAllAvailableProducts()
+        {
+            {
+                var availableProducts = await _context.Products
+                    .Where(p => p.IsAvailable)
+                    .ToArrayAsync();
+
+                return Ok(availableProducts);
+            }
+        }
+
         // Asynchronous method to get a product by ID
         [HttpGet("{id}")]
         public async Task<ActionResult> GetProduct(int id)
