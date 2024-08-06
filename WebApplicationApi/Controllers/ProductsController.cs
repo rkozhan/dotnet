@@ -7,5 +7,10 @@ namespace WebApplicationApi.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
+        [HttpGet]
+        public string getProducts()
+        {
+            return "OK";
+        }
     }
 }
