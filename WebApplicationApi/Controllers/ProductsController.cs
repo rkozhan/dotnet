@@ -19,9 +19,9 @@ namespace WebApplicationApi.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<Product> getAllProducts()
+        public ActionResult  getAllProducts()
         {
-            return _context.Products.ToArray();
+            return Ok(_context.Products.ToArray());
         }
     }
 }
