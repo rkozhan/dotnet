@@ -28,6 +28,11 @@ namespace WebApplicationApi.Controllers
         public ActionResult GetProduct(int id)
         {
             var product = _context.Products.Find(id);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
             return Ok(product);
         }
     }
