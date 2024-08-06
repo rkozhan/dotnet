@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WebApplicationApi.Models;
 
 namespace WebApplicationApi.Controllers
 {
@@ -7,10 +8,20 @@ namespace WebApplicationApi.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        [HttpGet]
-        public string getProducts()
+        private readonly ShopContext _context;
+
+        public ProductsController(ShopContext context)
         {
-            return "OK";
+            _context = context;
+
+            // Ensure the database is created. This is typically used for development and testing.
+            _context.Database.EnsureCreated();
+        }
+
+        [HttpGet]
+        public IEnumerable<Product> getAllProducts()
+        {
+            return _context.Products.ToArray();
         }
     }
 }
