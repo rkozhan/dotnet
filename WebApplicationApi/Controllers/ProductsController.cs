@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebApplicationApi.Models;
 
 namespace WebApplicationApi.Controllers
@@ -18,16 +19,18 @@ namespace WebApplicationApi.Controllers
             _context.Database.EnsureCreated();
         }
 
+        // Asynchronous method to get all products
         [HttpGet]
-        public ActionResult  getAllProducts()
+        public async Task<ActionResult>  getAllProducts()
         {
-            return Ok(_context.Products.ToArray());
+            return Ok(await _context.Products.ToArrayAsync());
         }
 
+        // Asynchronous method to get a product by ID
         [HttpGet("{id}")]
-        public ActionResult GetProduct(int id)
+        public async Task<ActionResult> GetProduct(int id)
         {
-            var product = _context.Products.Find(id);
+            var product = await _context.Products.FindAsync(id);
 
             if (product == null)
             {
