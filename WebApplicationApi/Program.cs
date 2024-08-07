@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApplicationApi.Models;
 
@@ -107,5 +108,29 @@ app.MapDelete("/products/{id}", async (ShopContext _context, int id) =>
 
     return Results.Ok(product);
 });
+
+app.MapDelete("/products/delete", async (ShopContext _context, [FromQuery] int[] ids) =>
+{
+    var products = new List<Product>();
+
+    foreach (var id in ids)
+    {
+        var product = await _context.Products.FindAsync(id);
+
+        if (product == null)
+        {
+            return Results.NotFound();
+        }
+        else
+        {
+            products.Add(product);
+        }
+    }
+
+    _context.Products.RemoveRange(products);
+    await _context.SaveChangesAsync();
+    return Results.Ok(products);
+});
+
 
 app.Run();
