@@ -21,9 +21,21 @@ namespace WebApplicationApi.Controllers
 
         // Asynchronous method to get all products
         [HttpGet]
-        public async Task<ActionResult>  getAllProducts([FromQuery] QueryParameters queryParameters)
+        public async Task<ActionResult>  getAllProducts([FromQuery] ProductQueryParameters queryParameters)
         {
             IQueryable<Product> products = _context.Products;
+
+            if(queryParameters.MinPrice != null)
+            {
+                products = products
+                    .Where(p => p.Price >= queryParameters.MinPrice.Value);
+            }
+
+            if (queryParameters.MaxPrice != null)
+            {
+                products = products
+                    .Where(p => p.Price <= queryParameters.MaxPrice.Value);
+            }
 
             products = products
                 .Skip(queryParameters.Size * (queryParameters.Page - 1))
