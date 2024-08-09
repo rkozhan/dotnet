@@ -1,3 +1,4 @@
+using HPlusSport.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApplicationApi.Models;
@@ -37,8 +38,47 @@ using (var scope = app.Services.CreateScope())
     await db.Database.EnsureCreatedAsync();
 }
 
-app.MapGet("/products", async (ShopContext _context) =>
+app.MapGet("/products", async (ShopContext _context, [AsParameters] ProductQueryParameters queryParameters) =>
 {
+
+    IQueryable<Product> products = _context.Products;
+
+    if (queryParameters.MinPrice != null)
+    {
+        products = products
+            .Where(p => p.Price >= queryParameters.MinPrice.Value);
+    }
+
+    if (queryParameters.MaxPrice != null)
+    {
+        products = products
+            .Where(p => p.Price <= queryParameters.MaxPrice.Value);
+    }
+
+    if (!string.IsNullOrEmpty(queryParameters.Sku))
+    {
+        products = products
+            .Where(p => p.Sku == queryParameters.Sku);
+    }
+
+    if (!string.IsNullOrEmpty(queryParameters.Name))
+    {
+        products = products
+            .Where(p => p.Name.ToLower().Contains(queryParameters.Name.ToLower()));
+    }
+
+    if (!string.IsNullOrEmpty(queryParameters.SortBy))
+    {
+        if (typeof(Product).GetProperty(queryParameters.SortBy) != null)
+        {
+            products = products.OrderByCustom(queryParameters.SortBy, queryParameters.SortOrder);
+        }
+    }
+
+    products = products
+        .Skip(queryParameters.Size * (queryParameters.Page - 1))
+        .Take(queryParameters.Size);
+
     return await _context.Products.ToArrayAsync();
 });
 
