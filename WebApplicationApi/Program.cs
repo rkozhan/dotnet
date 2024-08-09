@@ -3,6 +3,9 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApplicationApi.Models;
+using HPlusSport.API;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +29,12 @@ builder.Services.AddApiVersioning(options =>
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.OperationFilter<SwaggerDefaultValues>();
+});
 
 builder.Services.AddDbContext<ShopContext>(options =>
 {
@@ -39,7 +47,17 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        var descriptions = app.DescribeApiVersions();
+
+        foreach (var description in app.DescribeApiVersions())
+        {
+            options.SwaggerEndpoint(
+                $"/swagger/{description.GroupName}/swagger.json",
+                description.GroupName.ToUpperInvariant());
+        }
+    });
 }
 
 app.UseHttpsRedirection();
@@ -47,6 +65,12 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+var apiVersionSet = app.NewApiVersionSet()
+    .HasApiVersion(new ApiVersion(1, 0))
+    .HasApiVersion(new ApiVersion(2, 0))
+    .ReportApiVersions()
+    .Build();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -96,7 +120,56 @@ app.MapGet("/products", async (ShopContext _context, [AsParameters] ProductQuery
         .Take(queryParameters.Size);
 
     return await _context.Products.ToArrayAsync();
-});
+})
+    .WithApiVersionSet(apiVersionSet)
+    .MapToApiVersion(new ApiVersion(1, 0));
+
+app.MapGet("/products", async (ShopContext _context, [AsParameters] ProductQueryParameters queryParameters) =>
+{
+
+    IQueryable<Product> products = _context.Products.Where(p => p.IsAvailable == true);
+
+    if (queryParameters.MinPrice != null)
+    {
+        products = products
+            .Where(p => p.Price >= queryParameters.MinPrice.Value);
+    }
+
+    if (queryParameters.MaxPrice != null)
+    {
+        products = products
+            .Where(p => p.Price <= queryParameters.MaxPrice.Value);
+    }
+
+    if (!string.IsNullOrEmpty(queryParameters.Sku))
+    {
+        products = products
+            .Where(p => p.Sku == queryParameters.Sku);
+    }
+
+    if (!string.IsNullOrEmpty(queryParameters.Name))
+    {
+        products = products
+            .Where(p => p.Name.ToLower().Contains(queryParameters.Name.ToLower()));
+    }
+
+    if (!string.IsNullOrEmpty(queryParameters.SortBy))
+    {
+        if (typeof(Product).GetProperty(queryParameters.SortBy) != null)
+        {
+            products = products.OrderByCustom(queryParameters.SortBy, queryParameters.SortOrder);
+        }
+    }
+
+    products = products
+        .Skip(queryParameters.Size * (queryParameters.Page - 1))
+        .Take(queryParameters.Size);
+
+    return await _context.Products.ToArrayAsync();
+})
+    .WithApiVersionSet(apiVersionSet)
+    .MapToApiVersion(new ApiVersion(2, 0));
+
 
 app.MapGet("/products/available", async (ShopContext _context) =>
     Results.Ok(await _context.Products.Where(p => p.IsAvailable).ToArrayAsync())
