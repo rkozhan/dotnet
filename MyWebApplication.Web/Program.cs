@@ -1,4 +1,15 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using MyWebApplication.Web;
+using MyWebApplication.Web.Data;
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("MyWebApplicationWebContextConnection") ?? throw new InvalidOperationException("Connection string 'MyWebApplicationWebContextConnection' not found.");
+
+//to get this you should add to .web new scaffolded Item - entity 
+//then tools/NuGet package manager/console: Add-Migration Initial //and then; Update-Database
+builder.Services.AddDbContext<MyWebApplicationWebContext>(options => options.UseSqlite(connectionString));
+
+builder.Services.AddDefaultIdentity<MyWebApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<MyWebApplicationWebContext>();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
