@@ -1,0 +1,38 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+
+<ul id="products-list"></ul>
+
+@section Scripts {
+    <script>
+        const url = 'https://localhost:7240/api/products';
+        let productsList = document.getElementById('products-list');
+
+        fetch(url)
+            .then(responce => responce.json())
+            .then(data => showProducts(data))
+            .catch(exc => {
+                alert("Error!");
+                console.error(exc)
+            });
+
+        function showProducts(products)) {
+            products.forEach(pproduct => {
+                let li = document.createElement('li');
+                let text = `${product.name} (${product.price})`;
+                li.appendChild(
+                    document.createTextNode(text));
+                productsList.appendChild(li);
+            });
+        }
+    </script>
+}

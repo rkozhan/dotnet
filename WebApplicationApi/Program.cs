@@ -26,6 +26,11 @@ builder.Services.AddApiVersioning(options =>
         options.SubstituteApiVersionInUrl = true;
     });
 
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromDays(365);
+});
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -39,6 +44,16 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddDbContext<ShopContext>(options =>
 {
     options.UseInMemoryDatabase("Shop");
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder
+            .WithOrigins("https://localhost:7269", "http://localhost:5243")
+            .WithHeaders("X-API-Version");
+    });
 });
 
 var app = builder.Build();
@@ -58,11 +73,18 @@ if (app.Environment.IsDevelopment())
                 description.GroupName.ToUpperInvariant());
         }
     });
+} else
+{
+    app.UseHsts();
 }
+
+app.UseHsts();
 
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseCors();
 
 app.MapControllers();
 
